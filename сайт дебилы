@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КРОССОВКИ ДЛЯ ДЕБИЛОВ</title>
+
+<!--
+  =====================================================================
+  КАК РЕДАКТИРОВАТЬ ЭТОТ САЙТ (памятка для себя)
+  =====================================================================
+  1. Все ТЕКСТЫ лежат прямо в HTML ниже — просто ищи нужную фразу
+     и меняй её. Разделы отмечены комментариями <!-- ЭТО... -->.
+  2. Все ЦВЕТА собраны в одном месте — в блоке :root в начале <style>.
+     Меняешь один hex-код там — меняется цвет по всему сайту.
+  3. ТОВАРЫ (карточки кроссовок) — это блоки .product-card в разделе
+     "КАТАЛОГ". Скопируй один блок целиком, чтобы добавить новый товар,
+     удали блок — чтобы убрать товар.
+  4. Вместо фото кроссовок сейчас стоят цветные заглушки с эмодзи 👟.
+     Чтобы вставить свою картинку — замени <div class="product-img">...</div>
+     на <img src="путь_к_файлу.jpg" class="product-img">.
+  5. JS в самом низу файла — там счётчик корзины и открытие мобильного меню.
+     Он написан максимально просто, без библиотек.
+  =====================================================================
+-->
+
+<style>
+  /* ==================== 1. ЦВЕТА И ПЕРЕМЕННЫЕ ==================== */
+  :root{
+    --bg:        #070b16;   /* фон страницы — почти чёрный с синим оттенком */
+    --bg-panel:  #0e1630;   /* фон карточек/панелей */
+    --bg-panel2: #131c3d;   /* фон чуть светлее (hover, шапка) */
+    --line:      #223163;   /* цвет тонких линий-разделителей */
+    --text:      #eef1fb;   /* основной цвет текста */
+    --muted:     #8b96b8;   /* приглушённый серо-синий текст */
+    --blue:      #2e5eff;   /* основной синий акцент */
+    --blue-neon: #00d4ff;   /* яркий неоново-голубой акцент */
+
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior:smooth; }
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    overflow-x:hidden;
+  }
+
+  a { color:inherit; text-decoration:none; }
+  ul { list-style:none; }
+  img { max-width:100%; display:block; }
+
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  ::selection{ background:var(--blue); color:#fff; }
+
+  /* фокус для доступности с клавиатуры */
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--blue-neon);
+    outline-offset:3px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+
+  /* ==================== ШАПКА (HEADER) ==================== */
+  header{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:rgba(7,11,22,0.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    height:78px;
+  }
+  .logo{
+    font-family:var(--font-display);
+    font-size:24px;
+    letter-spacing:0.5px;
+    line-height:1;
+    white-space:nowrap;
+  }
+  .logo span{ color:var(--blue-neon); }
+
+  nav.main-nav{ display:flex; gap:36px; }
+  nav.main-nav a{
+    font-size:14px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--muted);
+    transition:color 0.2s ease;
+    position:relative;
+  }
+  nav.main-nav a:hover{ color:var(--text); }
+  nav.main-nav a::after{
+    content:"";
+    position:absolute;
+    left:0; bottom:-6px;
+    width:0; height:2px;
+    background:var(--blue-neon);
+    transition:width 0.25s ease;
+  }
+  nav.main-nav a:hover::after{ width:100%; }
+
+  .header-actions{ display:flex; align-items:center; gap:18px; }
+
+  .cart-btn{
+    display:flex; align-items:center; gap:8px;
+    background:var(--bg-panel2);
+    border:1px solid var(--line);
+    padding:9px 16px;
+    border-radius:999px;
+    font-size:13px; font-weight:700;
+    cursor:pointer;
+    color:var(--text);
+    transition:border-color 0.2s ease, transform 0.15s ease;
+  }
+  .cart-btn:hover{ border-color:var(--blue-neon); transform:translateY(-1px); }
+  .cart-count{
+    background:var(--blue);
+    color:#fff;
+    min-width:20px; height:20px;
+    border-radius:50%;
+    font-size:11px;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 4px;
+  }
+
+  .burger{
+    display:none;
+    width:36px; height:36px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:transparent;
+    color:var(--text);
+    font-size:18px;
+    cursor:pointer;
+  }
+
+  /* ==================== БЕГУЩАЯ СТРОКА (MARQUEE) ==================== */
+  .marquee{
+    background:var(--blue);
+    color:#050914;
+    overflow:hidden;
+    white-space:nowrap;
+    border-bottom:1px solid var(--line);
+  }
+  .marquee-track{
+    display:inline-flex;
+    animation:marquee 22s linear infinite;
+    padding:10px 0;
+  }
+  .marquee-track span{
+    font-family:var(--font-display);
+    font-size:15px;
+    letter-spacing:1.5px;
+    padding:0 20px;
+    text-transform:uppercase;
+  }
+  @keyframes marquee{
+    0%   { transform:translateX(0); }
+    100% { transform:translateX(-50%); }
+  }
+
+  /* ==================== HERO ==================== */
+  .hero{
+    position:relative;
+    padding:120px 0 100px;
+    text-align:center;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(46,94,255,0.25), transparent 70%);
+  }
+  .hero::before{
+    /* тонкая сетка на фоне — намёк на "кроссовочный" гриды/подошву */
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:56px 56px;
+    opacity:0.15;
+    mask-image:radial-gradient(ellipse 70% 60% at 50% 20%, #000 30%, transparent 75%);
+    pointer-events:none;
+  }
+  .hero-eyebrow{
+    display:inline-block;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--blue-neon);
+    border:1px solid var(--blue-neon);
+    padding:6px 14px;
+    border-radius:999px;
+    margin-bottom:26px;
+  }
+  .hero h1{
+    font-family:var(--font-display);
+    font-size:clamp(46px, 9vw, 108px);
+    line-height:0.95;
+    letter-spacing:1px;
+    position:relative;
+    z-index:1;
+  }
+  .hero h1 .accent{ color:var(--blue-neon); }
+  .hero p.sub{
+    max-width:560px;
+    margin:26px auto 0;
+    color:var(--muted);
+    font-size:17px;
+    line-height:1.6;
+    position:relative; z-index:1;
+  }
+  .hero-cta{
+    margin-top:40px;
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    position:relative; z-index:1;
+  }
+  .btn{
+    display:inline-block;
+    padding:15px 30px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--blue), var(--blue-neon));
+    color:#04070f;
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 10px 30px -8px rgba(46,94,255,0.6); }
+  .btn-ghost{
+    background:transparent;
+    border-color:var(--line);
+    color:var(--text);
+  }
+  .btn-ghost:hover{ border-color:var(--blue-neon); }
+
+  /* фирменный "стикер"-бейдж — сигнатурный элемент дизайна */
+  .sticker{
+    position:absolute;
+    top:56px; right:6%;
+    width:128px; height:128px;
+    border-radius:50%;
+    background:var(--bg-panel2);
+    border:2px dashed var(--blue-neon);
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    font-family:var(--font-display);
+    font-size:13px;
+    line-height:1.25;
+    letter-spacing:0.5px;
+    transform:rotate(12deg);
+    animation:spin-slow 18s linear infinite;
+    z-index:1;
+  }
+  @keyframes spin-slow{
+    from{ transform:rotate(12deg); }
+    to{ transform:rotate(372deg); }
+  }
+  @media (max-width:900px){ .sticker{ display:none; } }
+
+  /* ==================== ОБЩИЕ ЗАГОЛОВКИ СЕКЦИЙ ==================== */
+  .section{ padding:100px 0; }
+  .section-head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin-bottom:50px;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .section-num{
+    font-family:var(--font-display);
+    font-size:14px;
+    color:var(--blue-neon);
+    letter-spacing:2px;
+    margin-bottom:10px;
+    display:block;
+  }
+  .section-head h2{
+    font-family:var(--font-display);
+    font-size:clamp(32px, 5vw, 52px);
+    letter-spacing:0.5px;
+  }
+  .section-head p{
+    color:var(--muted);
+    max-width:360px;
+    font-size:15px;
+    line-height:1.6;
+  }
+
+  /* ==================== КАТАЛОГ ==================== */
+  .catalog{ background:var(--bg); }
+  .product-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:24px;
+  }
+  @media (max-width:900px){ .product-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:600px){ .product-grid{ grid-template-columns:1fr; } }
+
+  .product-card{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    overflow:hidden;
+    transition:border-color 0.25s ease, transform 0.25s ease;
+  }
+  .product-card:hover{
+    border-color:var(--blue-neon);
+    transform:translateY(-6px);
+  }
+  .product-img{
+    height:210px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:64px;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(0,212,255,0.25), transparent 60%),
+      var(--bg-panel2);
+    border-bottom:1px solid var(--line);
+  }
+  .product-body{ padding:22px; }
+  .product-tag{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--blue-neon);
+    font-weight:700;
+  }
+  .product-body h3{
+    font-family:var(--font-display);
+    font-size:22px;
+    letter-spacing:0.5px;
+    margin:8px 0 6px;
+  }
+  .product-body p{
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.5;
+    margin-bottom:16px;
+  }
+  .product-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .price{ font-family:var(--font-display); font-size:22px; }
+  .buy-btn{
+    background:var(--bg-panel2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    cursor:pointer;
+    transition:all 0.2s ease;
+  }
+  .buy-btn:hover{
+    background:var(--blue);
+    border-color:var(--blue);
+    color:#04070f;
+  }
+
+  /* ==================== МАНИФЕСТ ==================== */
+  .manifesto{
+    background:var(--bg-panel);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .manifesto-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:60px;
+    align-items:center;
+  }
+  @media (max-width:800px){ .manifesto-grid{ grid-template-columns:1fr; } }
+  .manifesto h2{
+    font-family:var(--font-display);
+    font-size:clamp(30px,5vw,44px);
+    line-height:1.1;
+    margin-bottom:22px;
+  }
+  .manifesto p{
+    color:var(--muted);
+    font-size:16px;
+    line-height:1.7;
+    margin-bottom:16px;
+  }
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+  }
+  .stat{
+    background:var(--bg-panel2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:22px 16px;
+    text-align:center;
+  }
+  .stat b{
+    display:block;
+    font-family:var(--font-display);
+    font-size:30px;
+    color:var(--blue-neon);
+  }
+  .stat span{
+    font-size:12px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+
+  /* ==================== ПОДВАЛ (FOOTER) ==================== */
+  footer{ padding:70px 0 30px; }
+  .footer-top{
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:40px;
+    padding-bottom:50px;
+    border-bottom:1px solid var(--line);
+  }
+  .footer-col h4{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:var(--blue-neon);
+    margin-bottom:18px;
+  }
+  .footer-col li{ margin-bottom:10px; }
+  .footer-col a{
+    color:var(--muted);
+    font-size:14px;
+    transition:color 0.2s ease;
+  }
+  .footer-col a:hover{ color:var(--text); }
+  .footer-bottom{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:12px;
+    padding-top:26px;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  @media (max-width:800px){
+    nav.main-nav{
+      position:fixed;
+      top:78px; left:0; right:0;
+      background:var(--bg-panel2);
+      flex-direction:column;
+      padding:24px;
+      gap:20px;
+      border-bottom:1px solid var(--line);
+      transform:translateY(-150%);
+      transition:transform 0.3s ease;
+    }
+    nav.main-nav.open{ transform:translateY(0); }
+    .burger{ display:block; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Подключение шрифтов -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- ================= ШАПКА ================= -->
+<header>
+  <div class="wrap header-inner">
+    <div class="logo">КРОССОВКИ <span>ДЛЯ ДЕБИЛОВ</span></div>
+
+    <!-- ЭТО меню навигации: правь пункты тут -->
+    <nav class="main-nav" id="mainNav">
+      <a href="#catalog">Каталог</a>
+      <a href="#manifesto">Манифест</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="cart-btn" id="cartBtn">🛒 Корзина <span class="cart-count" id="cartCount">0</span></button>
+      <button class="burger" id="burgerBtn">☰</button>
+    </div>
+  </div>
+</header>
+
+<!-- ================= БЕГУЩАЯ СТРОКА: правь фразы через ★ ================= -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span>НЕ ДУМАЙ, ПРОСТО КУПИ ★ РАЗМЕР ЗНАЧЕНИЯ НЕ ИМЕЕТ ★ ДОСТАВКА ПО ВСЕЙ СТРАНЕ ★ УМНЫМ СЮДА НЕЛЬЗЯ ★</span>
+    <span>НЕ ДУМАЙ, ПРОСТО КУПИ ★ РАЗМЕР ЗНАЧЕНИЯ НЕ ИМЕЕТ ★ ДОСТАВКА ПО ВСЕЙ СТРАНЕ ★ УМНЫМ СЮДА НЕЛЬЗЯ ★</span>
+  </div>
+</div>
+
+<!-- ================= ГЕРОЙ (HERO) ================= -->
+<section class="hero">
+  <div class="sticker">100%<br>БЕЗ<br>МОЗГОВ</div>
+  <div class="wrap">
+    <span class="hero-eyebrow">Новая коллекция уже тут</span>
+    <h1>КРОССОВКИ<br>ДЛЯ <span class="accent">ДЕБИЛОВ</span></h1>
+    <p class="sub">
+      Мы не задаём вопросов. Ты не думаешь. Просто выбираешь пару —
+      и идёшь покорять асфальт. Без умных советов, без занудных стилистов.
+    </p>
+    <div class="hero-cta">
+      <a href="#catalog" class="btn btn-primary">Смотреть каталог</a>
+      <a href="#manifesto" class="btn btn-ghost">Наш манифест</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= КАТАЛОГ: тут добавляй/удаляй товары ================= -->
+<section class="section catalog" id="catalog">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-num">01 / КАТАЛОГ</span>
+        <h2>Хиты продаж</h2>
+      </div>
+      <p>Шесть моделей. Все одинаково бессмысленные. Все одинаково крутые.</p>
+    </div>
+
+    <div class="product-grid">
+
+      <!-- ЭТО ТОВАР №1 — скопируй весь этот блок, чтобы добавить новую пару -->
+      <div class="product-card">
+        <div class="product-img">👟</div>
+        <div class="product-body">
+          <span class="product-tag">Бестселлер</span>
+          <h3>ТУПИК X1</h3>
+          <p>Для тех, кто идёт вперёд, не глядя на светофор.</p>
+          <div class="product-footer">
+            <span class="price">4 990 ₽</span>
+            <button class="buy-btn">Купить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ЭТО ТОВАР №2 -->
+      <div class="product-card">
+        <div class="product-img">👟</div>
+        <div class="product-body">
+          <span class="product-tag">Новинка</span>
+          <h3>НУЛЕВОЙ IQ</h3>
+          <p>Ноль извилин — ноль компромиссов в стиле.</p>
+          <div class="product-footer">
+            <span class="price">5 490 ₽</span>
+            <button class="buy-btn">Купить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ЭТО ТОВАР №3 -->
+      <div class="product-card">
+        <div class="product-img">👟</div>
+        <div class="product-body">
+          <span class="product-tag">Хит сезона</span>
+          <h3>КОРОЧЕ БЕГИ</h3>
+          <p>Название говорит само за себя.</p>
+          <div class="product-footer">
+            <span class="price">5 990 ₽</span>
+            <button class="buy-btn">Купить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ЭТО ТОВАР №4 -->
+      <div class="product-card">
+        <div class="product-img">👟</div>
+        <div class="product-body">
+          <span class="product-tag">Ограниченная серия</span>
+          <h3>СИНИЙ ЭКРАН</h3>
+          <p>Перезагружает не систему, а твой стиль.</p>
+          <div class="product-footer">
+            <span class="price">6 490 ₽</span>
+            <button class="buy-btn">Купить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ЭТО ТОВАР №5 -->
+      <div class="product-card">
+        <div class="product-img">👟</div>
+        <div class="product-body">
+          <span class="product-tag">Классика</span>
+          <h3>АВТОПИЛОТ</h3>
+          <p>Идёшь, даже не включая голову.</p>
+          <div class="product-footer">
+            <span class="price">4 490 ₽</span>
+            <button class="buy-btn">Купить</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ЭТО ТОВАР №6 -->
+      <div class="product-card">
+        <div class="product-img">👟</div>
+        <div class="product-body">
+          <span class="product-tag">Топ выбор</span>
+          <h3>НОЛЬ ВОПРОСОВ</h3>
+          <p>Никаких «а точно надо», только «беру».</p>
+          <div class="product-footer">
+            <span class="price">5 190 ₽</span>
+            <button class="buy-btn">Купить</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= МАНИФЕСТ ================= -->
+<section class="section manifesto" id="manifesto">
+  <div class="wrap manifesto-grid">
+    <div>
+      <span class="section-num">02 / МАНИФЕСТ</span>
+      <h2>Мы делаем кроссовки для тех, кто не читает описание товара</h2>
+      <p>Мы не будем рассказывать про технологию амортизации и дышащую сетку. Это просто кроссовки. Ты их носишь, они держатся на ноге, этого достаточно.</p>
+      <p>Никакой философии, никакой миссии спасти планету. Просто удобно, просто дёшево, просто "для дебилов" — в самом добром смысле этого слова.</p>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><b>0</b><span>Извилин нужно</span></div>
+      <div class="stat"><b>24</b><span>Часа на решение</span></div>
+      <div class="stat"><b>100%</b><span>Без занудства</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ПОДВАЛ (FOOTER) ================= -->
+<footer id="contacts">
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-col">
+        <h4>Магазин</h4>
+        <ul>
+          <li><a href="#catalog">Каталог</a></li>
+          <li><a href="#manifesto">Манифест</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Контакты</h4>
+        <ul>
+          <li><a href="mailto:info@debilshoes.ru">info@debilshoes.ru</a></li>
+          <li><a href="tel:+70000000000">+7 (000) 000-00-00</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Соцсети</h4>
+        <ul>
+          <li><a href="#">Telegram</a></li>
+          <li><a href="#">Instagram*</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Кроссовки для дебилов. Все права защищены (наверное).</span>
+      <span>Сделано без единой умной мысли.</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ================= JS: корзина + мобильное меню ================= -->
+<script>
+  // счётчик корзины: просто плюсуем при клике "Купить"
+  let cartCount = 0;
+  const cartCountEl = document.getElementById('cartCount');
+
+  document.querySelectorAll('.buy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cartCount++;
+      cartCountEl.textContent = cartCount;
+      btn.textContent = 'Добавлено ✓';
+      setTimeout(() => { btn.textContent = 'Купить'; }, 1200);
+    });
+  });
+
+  // открытие/закрытие мобильного меню по бургеру
+  const burgerBtn = document.getElementById('burgerBtn');
+  const mainNav = document.getElementById('mainNav');
+  burgerBtn.addEventListener('click', () => {
+    mainNav.classList.toggle('open');
+  });
+
+  // клик по кнопке корзины — просто заглушка-уведомление
+  document.getElementById('cartBtn').addEventListener('click', () => {
+    alert('Товаров в корзине: ' + cartCount + '. Оформление заказа пока не подключено — это просто шаблон.');
+  });
+</script>
+
+</body>
+</html>
